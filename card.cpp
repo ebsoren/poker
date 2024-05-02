@@ -4,6 +4,7 @@
 using namespace std;
 
 // Constructor implementation
+Card::Card(){}
 Card::Card(const int& suit, const int& rank) : suit(suit), rank(rank) {}
 
 // Assignment operator implementation

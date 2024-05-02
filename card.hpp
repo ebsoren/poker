@@ -1,4 +1,3 @@
-// Card.hpp
 #ifndef CARD_HPP
 #define CARD_HPP
 
@@ -6,7 +5,7 @@
 
 class Card {
  private:
-  int suit;  // stores card suit.
+  int suit = 0;  // stores card suit.
   // "CLUBS" = 0,
   // "SPADES" = 1,
   // "DIAMONDS" = 2,
@@ -18,7 +17,7 @@ class Card {
   // QUEEN = 12
   // KING = 13
   // ACE = 14
-  int rank;
+  int rank = 0;
 
  public:
   // Default Constructor for the Two of Clubs

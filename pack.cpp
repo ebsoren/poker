@@ -1,4 +1,5 @@
 #include "pack.hpp"
+#include <iostream>
 
 // Initializes  a pack with no cards dealt. the vector of cards runs from 2 to
 // A, running from Clubs->Spades->Diamonds->Hearts.
@@ -24,7 +25,7 @@ Card Pack::dealCard() {
 }
 // simply skips a card within the pack, since the dealCard function relies on
 // num_dealed to decide which card to deal.
-void Pack::burnCard() { ++num_dealed; }
+void Pack::burnCard() { ++num_dealed; std::cout << "A card has been burned.\n"; }
 
 // Resets the pack with a complete set of cards
 void Pack::resetPack() {
