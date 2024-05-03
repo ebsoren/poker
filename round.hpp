@@ -17,10 +17,14 @@ class Round {
 
   void preflop();
   void flop();
-  void
-  turn_or_river();  // turn and river play follow essentially the same process.
+  void turn_or_river();  // turn and river basically follow the same process.
+  void checkWinner();
+  void playTurnAll();
+  int get_num_raises();
+  void show_cards();
 
-  void reset();
+
+  void resetBets();
 
   ~Round();
 
@@ -28,6 +32,7 @@ class Round {
   int pot = 0;
   int num_players = 0;
   int currentBet = 0;
+  int num_raises = 0;
   std::vector<Card> community_cards;
   std::vector<std::unique_ptr<Player>>& players;
   Pack pack;

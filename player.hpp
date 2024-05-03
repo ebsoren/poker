@@ -16,33 +16,39 @@ class Player {
   virtual void setHandFirst(Card card) { hand.first = card; }
   virtual void setHandSecond(Card card) { hand.second = card; }
 
-  virtual void playTurn(int &currentBet, int &pot, bool is_preflop) = 0;
+  virtual void playTurn(int& currentBet, int& pot, int& num_players,
+                        int& num_raises) = 0;
 
-  virtual void setBetSize(int inBet) { bet = inBet; }
-  virtual int getBet() { return bet; }
   virtual int getStack() { return stack; }
 
+  virtual bool has_folded_func() { return has_folded; }
+  virtual void has_folded_setter() { has_folded = true; }
+
   virtual const std::string& getName() { return name; }
+  virtual const int& getBet() { return bet; }
+  virtual const void setBet(int bet_in) { bet = bet_in; }
 
  private:
   std::pair<Card, Card> hand;
   int stack = 0;
+  bool has_folded = false;
   int bet = 0;
-
   std::string name;
   std::string type;
 };
 
 class Bot : public Player {
  public:
-  using Player::Player;                    
-  void playTurn(int &currentBet, int &pot, bool is_preflop) override;  
+  using Player::Player;
+  void playTurn(int& currentBet, int& pot, int& num_players,
+                int& num_raises) override;
 };
 
 class Human : public Player {
  public:
   Human(const std::string& name, const std::string& type, int stack);
-  void playTurn(int &currentBet, int &pot, bool is_preflop) override;
+  void playTurn(int& currentBet, int& pot, int& num_players,
+                int& num_raises) override;
 };
 
 #endif

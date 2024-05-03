@@ -19,7 +19,11 @@ int main() {
   Round *round = new Round(players);
   round->setup();
   round->preflop();
+  round->resetBets();
   round->flop();
+  round->resetBets();
   round->turn_or_river();
+  round->resetBets();
   round->turn_or_river();
+  round->show_cards();
 }
