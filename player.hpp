@@ -16,7 +16,7 @@ class Player {
   virtual void setHandFirst(Card card) { hand.first = card; }
   virtual void setHandSecond(Card card) { hand.second = card; }
 
-  virtual void playTurn(int &currentBet, bool is_preflop) = 0;
+  virtual void playTurn(int &currentBet, int &pot, bool is_preflop) = 0;
 
   virtual void setBetSize(int inBet) { bet = inBet; }
   virtual int getBet() { return bet; }
@@ -36,13 +36,13 @@ class Player {
 class Bot : public Player {
  public:
   using Player::Player;                    
-  void playTurn(int &currentBet, bool is_preflop) override;  
+  void playTurn(int &currentBet, int &pot, bool is_preflop) override;  
 };
 
 class Human : public Player {
  public:
   Human(const std::string& name, const std::string& type, int stack);
-  void playTurn(int &currentBet, bool is_preflop) override;
+  void playTurn(int &currentBet, int &pot, bool is_preflop) override;
 };
 
 #endif

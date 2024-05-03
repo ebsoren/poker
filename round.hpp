@@ -31,6 +31,7 @@ class Round {
   std::vector<Card> community_cards;
   std::vector<std::unique_ptr<Player>>& players;
   Pack pack;
+  bool river = false;
 };
 
 #endif
