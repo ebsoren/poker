@@ -1,5 +1,3 @@
-
-
 #include "round.hpp"
 
 using namespace std;
@@ -16,69 +14,34 @@ void Round::setup() {
   for (int i = 0; i < players.size(); ++i) {
     players[i]->setHandSecond(pack.dealCard());
   }
-  for (int i = 0; i < 3; ++i) {
-    community_cards.push_back(pack.dealCard());
-  }
 
   num_players = players.size();
 }
 
 void Round::preflop() {
-  num_raises = 0;
   cout << "\nit is the preflop\n" << endl;
-  playTurnAll();
+  playAll();
   checkWinner();
-
-  if (get_num_raises() > 0) {
-    playTurnAll();
-  }
 }
 
-void Round::flop() {
-  num_raises = 0;
+void Round::postflop(const string current_round) {
   if (num_players == 1) {
     return;
   }
-  cout << "\nit is the flop.\nThe cards are: \n";
-  for (int i = 0; i < community_cards.size(); ++i) {
-    cout << community_cards[i].printCard() << endl;
-  }
-  currentBet = 0;
-
-  playTurnAll();
-  checkWinner();
-
-  while (get_num_raises() > 0) {
-    playTurnAll();
-  }
-}
-
-void Round::turn_or_river() {
-  if (num_players == 1) {
-    return;
-  }
-  currentBet = 0;
-  num_raises = 0;
-
   pack.burnCard();
-  community_cards.push_back(pack.dealCard());
-  if (!river) {
-    river = true;
-    cout << "\nit is the turn\nThe cards are: \n";
-
-  } else {
-    cout << "\nit is the river\nThe cards are: \n" << endl;
-  }
+  addCommunityCard();
+  if(current_round == "flop"){
+    addCommunityCard(); 
+    addCommunityCard(); 
+  } 
+  cout << "\nit is the " << current_round << "\nThe cards are: \n";
   for (int i = 0; i < community_cards.size(); ++i) {
     cout << community_cards[i].printCard() << endl;
   }
+  currentBet = 0;
 
-  playTurnAll();
+  playAll();
   checkWinner();
-
-  if (get_num_raises() > 0) {
-    playTurnAll();
-  }
 }
 
 void Round::checkWinner() {
@@ -101,16 +64,38 @@ void Round::show_cards() {
   }
 }
 
-void Round::playTurnAll() {
+void Round::playAll() {
   for (int i = 0; i < players.size(); ++i) {
-    players[i]->playTurn(currentBet, pot, num_players, num_raises);
+    players[i]->play(currentBet, pot, num_players, previous_raise);
+  }
+
+  while (!checkIfContinue()) {
+    for (int i = 0; i < players.size(); ++i) {
+      players[i]->play(currentBet, pot, num_players, previous_raise);
+    }
   }
 }
 
-int Round::get_num_raises() { return num_raises; }
-
-void Round::resetBets(){
-  for(int i = 0; i < players.size();++i){
-    players[i]->setBet(0);
+void Round::resetBets() {
+  for (int i = 0; i < players.size(); ++i) {
+    players[i]->setBets_Stack(0);
   }
+  previous_raise = 0;
 }
+
+bool Round::checkIfContinue() {
+  vector<int> betSizes;
+  for (int i = 0; i < players.size(); ++i) {
+    if (!players[i]->has_folded_func()) {
+      betSizes.push_back(players[i]->getTotalBet());
+    }
+  }
+
+  if (std::equal(betSizes.begin() + 1, betSizes.end(), betSizes.begin())) {
+    return true;
+  }
+
+  return false;
+}
+
+void Round::addCommunityCard() { community_cards.push_back(pack.dealCard()); }

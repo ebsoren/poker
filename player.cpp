@@ -9,73 +9,178 @@ Player::~Player() {}
 Human::Human(const std::string &name, const std::string &type, int stack)
     : Player(name, type, stack) {}
 
-void Human::playTurn(int &currentBet, int &pot, int &num_players,
-                     int &num_raises) {
-  string decision;
-  if (has_folded_func()) {
+void Human::play(int &currentBet, int &pot, int &num_players, int &prevRaise) {
+  // Skip turn if player has folded or is all in
+  if (has_folded_func() || is_all_in_func()) {
     return;
   }
 
+  // If we aren't at a checking point or we have already called, skip the turn.
+  // By the nature of poker, once this is the case for the player at the end of
+  // the action, it is for all. For example, bet 5 -> call -> call -> call; all
+  // players are at currentBet Also: bet 5 -> raise 10 -> call -> call -> 5
+  // bettor calls; again, everyone is at currentBet, and the round should
+  // proceed.
+  if (currentBet != 0 && currentBet == getBet()) {
+    return;
+  }
+
+  printPlayerData();  // simply prints an interface. No values changed.
+
+  string decision;  // will be used to read in all inputs.
+
+  // if nobody has bet, call the bet_or_check decider function and end.
   if (currentBet == 0) {
-    cout << getName() << ":\nYour cards are: \n"
-         << getHand().first.printCard() << "\n"
-         << getHand().second.printCard() << "\nDo you check or bet?\n";
-    cin >> decision;
-
-    if (decision == "bet") {
-      cout << "How much?\n";
-      cin >> currentBet;
-      cout << "You bet " << currentBet << " dollars.\n";
-      pot += currentBet;
-      ++num_raises;
-      setBet(currentBet);
-
-    } else if (decision == "check") {
-      cout << "you checked\n";
-    }
+    bet_or_check(decision, pot, currentBet);
     return;
   }
 
-  cout << getName() << ": The amount needed to call is "
-       << currentBet - getBet() << " dollars.\nThe pot size is " << pot
-       << ".\nYour cards are: \n"
-       << getHand().first.printCard() << "\n"
-       << getHand().second.printCard() << "\nDo you fold, call, or raise?\n";
-  cin >> decision;
+  // since currentBet is greater than 0, decide fold, call, or raise
+
+  cout << "The amount needed to call is " << currentBet - getBet()
+       << " dollars.\n";
+  if (getStack() < (2 * currentBet - prevRaise)) {
+    if (getStack() <= currentBet - getBet()) {
+      cout << "do you fold or go all in for $" << getStack() << "?\n";
+    } else {
+      cout << "do you fold, call, or go all in?\n";
+    }
+  } else {
+    cout << "Do you fold, call, raise, or go all in? The mimumum raise bet is "
+         << (2 * currentBet - prevRaise) << ".\n";
+  }
+
+  getline(cin, decision);  // read in decision
+
+  // ensures decision is a valid input
+  while (decision != "raise" && decision != "fold" && decision != "call" &&
+         decision != "all in") {
+    cout << "Please type 'fold', 'call', 'raise', or 'all in'. \n";
+    getline(cin, decision);
+  }
+
+  // fold block
   if (decision == "fold") {
-    cout << "you folded\n";
+    cout << getName() << " folded\n\n";
+
     has_folded_setter();
     --num_players;
 
     return;
+
+    // call block
   } else if (decision == "call") {
-    cout << "you called " << currentBet << " dollars\n";
-    pot += currentBet;
-    if (num_raises > 0) {
-      --num_raises;
+    cout << getName() << " called " << currentBet - getBet() << " dollars";
+    if (currentBet - getBet() == getStack()) {
+      cout << " and went all in.";
+      cout << "\n";
+      all_in_setter();
     }
 
-    setBet(currentBet);
-    return;
-  } else if (decision == "raise") {
-    int raiseValue;
-    cout << "How much do you want to bet?\n";
-    cin >> raiseValue;
+    pot += currentBet - getBet();
+    setBets_Stack(currentBet - getBet());
 
-    cout << "you raised " << raiseValue << " dollars\n";
-
-    pot += raiseValue;
-    setBet(raiseValue);
-    currentBet = raiseValue;
-    ++num_raises;
-    return;
-  } else {
-    cout << "need an error exception or something here lol\n";
     return;
   }
+
+  // raise block
+  else if (decision == "raise") {
+    cout << "How much do you want to bet?\nTo go all in, bet " << getStack()
+         << ".\n";
+
+    int raise_value;
+    int check_value = 2 * currentBet - prevRaise;
+
+    readInput(raise_value, check_value);
+    if (raise_value == getStack()) {
+      cout << getName() << " went all in.\n";
+      all_in_setter();
+    } else {
+      cout << getName() << " raised " << raise_value << " dollars\n";
+    }
+
+    pot += raise_value;
+    setBets_Stack(raise_value);
+    prevRaise = currentBet;
+    currentBet = raise_value;
+    return;
+  }
+
+  cout << getName() << " went all in.\n";
+  pot += getStack();
+  setBets_Stack(getStack());
+  prevRaise = currentBet;
+  currentBet = getStack();
+  all_in_setter();
+
+}  // END OF PLAY FUNCTION
+
+void Human::printPlayerData() const {
+  cout << getName() << ": You have " << getStack()
+       << " dollars in your stack.\nYour cards are: \n"
+       << getHand().first.printCard() << "\n"
+       << getHand().second.printCard() << "\n";
 }
-// incomplete
-void Bot::playTurn(int &currentBet, int &pot, int &num_players,
-                   int &num_raises) {
+
+void Human::bet_or_check(string &decision, int &pot, int &currentBet) {
+  cout << "Do you check or bet?\n";
+  cin >> decision;
+
+  while (decision != "check" && decision != "bet") {
+    cout << "Please type 'check' or 'bet'. \n";
+    cin >> decision;
+  }
+
+  if (decision == "bet") {
+    cout << "How much?\nTo go all in, bet " << getStack() << ".\n";
+    int readVal;
+    readInput(readVal, currentBet);
+    pot += readVal;
+    if (readVal == getStack()) {
+      cout << getName() << " went all in.\n";
+      all_in_setter();
+    } else {
+      cout << getName() << " bet " << readVal << " dollars.\n\n";
+    }
+
+    setBets_Stack(readVal);
+    currentBet = readVal;
+  } else if (decision == "check") {
+    cout << getName() << " checked\n\n";
+  }
+}
+
+void Human::readInput(int &readValue, int &raise_val) {
+  bool isRaise = getBet() < raise_val;
+  int stack_temp = getStack();
+  while (true) {
+    cin >> readValue;
+    if (cin.fail()) {
+      cin.clear();
+      cin.ignore(numeric_limits<streamsize>::max(), '\n');
+      cout << "Please type a number.\n";
+    } else if (checkBetInput(readValue, stack_temp, raise_val, isRaise)) {
+      std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+      break;
+    }
+  }
+}
+
+bool Human::checkBetInput(int &val_in, int &stack_val, int &raise_val,
+                          bool isRaise) {
+  if (val_in > stack_val) {
+    cout << "This value is larger than your stack value. Please try again.\n";
+    return false;
+  }
+  if (val_in < raise_val && isRaise) {
+    cout << "This value is less than the minimum raise value. Please try "
+            "again.\n";
+    return false;
+  }
+  return true;
+}
+
+// play for bot has not been implemented.
+void Bot::play(int &currentBet, int &pot, int &num_players, int &prevRaise) {
   cout << "bot folded\n";
 }

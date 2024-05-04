@@ -5,11 +5,12 @@
 
 class Card {
  private:
-  int suit = 0;  // stores card suit.
+  // stores card suit.
   // "CLUBS" = 0,
   // "SPADES" = 1,
   // "DIAMONDS" = 2,
   // "HEARTS" = 3.
+  int suit = 0;
 
   // stores card rank. ranks are defined as equal to card values.
   // For face cards, we have:
