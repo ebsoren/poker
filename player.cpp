@@ -37,17 +37,18 @@ void Human::play(int &currentBet, int &pot, int &num_players, int &prevRaise) {
 
   // since currentBet is greater than 0, decide fold, call, or raise
 
-  cout << "The amount needed to call is " << currentBet - getBet()
-       << " dollars.\n";
   if (getStack() < (2 * currentBet - prevRaise)) {
     if (getStack() <= currentBet - getBet()) {
-      cout << "do you fold or go all in for $" << getStack() << "?\n";
+      cout << "Do you fold or go all in ($" << getStack() << ")?\n";
     } else {
-      cout << "do you fold, call, or go all in?\n";
+      cout << "Do you fold, call ($" << currentBet - getBet()
+           << "), or go all in ($" << getStack()
+           << ")? You do not have enough to raise.\n";
     }
   } else {
-    cout << "Do you fold, call, raise, or go all in? The mimumum raise bet is "
-         << (2 * currentBet - prevRaise) << ".\n";
+    cout << "Do you fold, call ($" << currentBet - getBet() << "), raise ($"
+         << 2 * currentBet - prevRaise << " minimum), or go all in ($"
+         << getStack() << ")?\n";
   }
 
   getline(cin, decision);  // read in decision
@@ -70,10 +71,11 @@ void Human::play(int &currentBet, int &pot, int &num_players, int &prevRaise) {
 
     // call block
   } else if (decision == "call") {
-    cout << getName() << " called " << currentBet - getBet() << " dollars";
+    cout << getName() << " called $" << currentBet - getBet();
+    ;
     if (currentBet - getBet() == getStack()) {
-      cout << " and went all in.";
-      cout << "\n";
+      cout << " and went all in";
+      cout << ".\n";
       all_in_setter();
     }
 
@@ -85,7 +87,8 @@ void Human::play(int &currentBet, int &pot, int &num_players, int &prevRaise) {
 
   // raise block
   else if (decision == "raise") {
-    cout << "How much do you want to bet?\nTo go all in, bet " << getStack()
+    cout << "How much do you want to raise? $" 
+         << 2 * currentBet - prevRaise << " minimum.\nTo go all in, bet $" << getStack()
          << ".\n";
 
     int raise_value;
@@ -96,7 +99,7 @@ void Human::play(int &currentBet, int &pot, int &num_players, int &prevRaise) {
       cout << getName() << " went all in.\n";
       all_in_setter();
     } else {
-      cout << getName() << " raised " << raise_value << " dollars\n";
+      cout << getName() << " raised $" << raise_value << ".\n";
     }
 
     pot += raise_value;
@@ -108,16 +111,17 @@ void Human::play(int &currentBet, int &pot, int &num_players, int &prevRaise) {
 
   cout << getName() << " went all in.\n";
   pot += getStack();
-  setBets_Stack(getStack());
+
   prevRaise = currentBet;
   currentBet = getStack();
+  setBets_Stack(getStack());
   all_in_setter();
 
 }  // END OF PLAY FUNCTION
 
 void Human::printPlayerData() const {
-  cout << getName() << ": You have " << getStack()
-       << " dollars in your stack.\nYour cards are: \n"
+  cout << getName() << ": You have $" << getStack()
+       << " in your stack.\nYour cards are: \n"
        << getHand().first.printCard() << "\n"
        << getHand().second.printCard() << "\n";
 }
@@ -132,7 +136,7 @@ void Human::bet_or_check(string &decision, int &pot, int &currentBet) {
   }
 
   if (decision == "bet") {
-    cout << "How much?\nTo go all in, bet " << getStack() << ".\n";
+    cout << "\nHow much?\nTo go all in, bet " << getStack() << ".\n";
     int readVal;
     readInput(readVal, currentBet);
     pot += readVal;
@@ -140,7 +144,7 @@ void Human::bet_or_check(string &decision, int &pot, int &currentBet) {
       cout << getName() << " went all in.\n";
       all_in_setter();
     } else {
-      cout << getName() << " bet " << readVal << " dollars.\n\n";
+      cout << getName() << " bet $" << readVal << ".\n\n";
     }
 
     setBets_Stack(readVal);

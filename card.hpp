@@ -3,6 +3,31 @@
 
 #include <string>
 
+enum Rank {
+  TWO = 2,
+  THREE = 3,
+  FOUR = 4,
+  FIVE = 5,
+  SIX = 6,
+  SEVEN = 7,
+  EIGHT = 8,
+  NINE = 9,
+  TEN = 10,
+  JACK = 11,
+  QUEEN = 12,
+  KING = 13,
+  ACE = 14,
+  NONE = 15,  // used when we need a "did not get a rank" returned
+};
+
+enum Suit {
+  CLUBS = 0,
+  SPADES = 1,
+  DIAMONDS = 2,
+  HEARTS = 3,
+  NONEs = 4,  // used as a placeholder suit
+};
+
 class Card {
  private:
   // stores card suit.
@@ -10,7 +35,7 @@ class Card {
   // "SPADES" = 1,
   // "DIAMONDS" = 2,
   // "HEARTS" = 3.
-  int suit = 0;
+  Suit suit = CLUBS;
 
   // stores card rank. ranks are defined as equal to card values.
   // For face cards, we have:
@@ -18,13 +43,11 @@ class Card {
   // QUEEN = 12
   // KING = 13
   // ACE = 14
-  int rank = 0;
+  Rank rank = TWO;
 
  public:
-  // Default Constructor for the Two of Clubs
-  Card();
   // Constructor
-  Card(const int& suit, const int& rank);
+  Card(const Rank& rank, const Suit& suit);
 
   // Destructor
   ~Card();
@@ -43,16 +66,18 @@ class Card {
   // "SPADES" = 1,
   // "DIAMONDS" = 2,
   // "HEARTS" = 3.
-  int getSuit() const;
+  Suit getSuit() const;
 
   // Get the rank of the card. Remember, face cards are defined:
   // JACK = 11
   // QUEEN = 12
   // KING = 13
   // ACE = 14
-  int getRank() const;
+  Rank getRank() const;
 
   std::string printCard() const;
+  std::string printRank() const;
+  std::string printSuit() const;
 };
 
 #endif  // CARD_HPP

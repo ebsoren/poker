@@ -65,7 +65,7 @@ class Player {
   }
 
  private:
-  std::pair<Card, Card> hand;  // player's hand
+  std::pair<Card, Card> hand = {Card(TWO, CLUBS), Card(TWO, SPADES)};  // player's hand
   int stack = 0;               // player's stack
   bool has_folded = false;     // tracks fold status
   bool is_all_in = false;      // tracks all in status
