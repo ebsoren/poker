@@ -9,19 +9,72 @@
 #include "pack.hpp"
 #include "player.hpp"
 
-enum Type {
-  HighCard = 0,
-  Pair = 1,
-  TwoPair = 2,
-  ThreeKind = 3,
-  Straight = 4,
-  Flush = 5,
-  FullHouse = 6,
-  FourKind = 7,
-  StraightFlush = 8,
-  RoyalFlush = 9,
+enum Hand {
+  HIGHCARD = 0,
+  PAIR = 1,
+  TWOPAIR = 2,
+  THREEKIND = 3,
+  STRAIGHT = 4,
+  FLUSH = 5,
+  FULLHOUSE = 6,
+  FOURKIND = 7,
+  STRAIGHTFLUSH = 8,
+  ROYALFLUSH = 9,
 
 };
+
+class Classifier {
+ public:
+  // constructor, also sorts cards_in by rank
+  Classifier();
+  Classifier(const std::vector<Card> cards_in);
+
+  // destructor
+  ~Classifier();
+
+  // returns the highest card
+  void highCardClassifier();
+  // returns the highest card in a suit
+  Suit highCardClassifier(Suit suit_in);
+
+  // returns the rank of paired cards (or NONE if none exist). rank_in is used
+  // so that different pairs can be detected in repeat calls of PairClassifier.
+  void pairClassifier();
+
+  // returns the rank of 3 of a kind cards (or NONE if none exist)
+  void threeKindClassifier();
+
+  void fourKindClassifier();
+
+  // returns true if a flush exists
+  void flushClassifier();
+
+  // returns true if a straight exists
+  void straightClassifier();
+
+  void setCards(std::vector<Card> cards_in) { cards = cards_in; }
+  void sortCards();
+
+  std::pair<Hand, Card> getBestHand();
+
+   void resetBestHand(){
+    bestHand = {HIGHCARD,{TWO, SPADES}};
+    found_hand = false;
+  }
+
+  // void printHand();
+
+ private:
+  std::vector<Card> cards;
+
+  // best hand for player
+  std::pair<Hand, Card> bestHand;
+  bool found_hand = false;
+}; // end classifier
+
+
+
+
 
 class Decider {
  public:
@@ -31,44 +84,14 @@ class Decider {
   // destructor
   ~Decider();
 
-  // returns the best hand
-  std::pair<Type, int> bestHand();
+  void determineHand(const std::vector<Card>& hand);
+ 
+  std::pair<int, std::pair<Hand, Card> > determineWinner();
 
  private:
   std::vector<std::pair<Card, Card> > allHands;
   std::vector<Card> community_cards;
-};
-
-class Classifier {
- public:
-  // constructor
-  Classifier(const std::vector<Card> cards_in);
-
-  // destructor
-  ~Classifier();
-
-  // returns the highest card
-  Card HighCardClassifier();
-
-  // returns the rank of paired cards (or NONE if none exist). rank_in is used
-  // so that different pairs can be detected in repeat calls of PairClassifier.
-  Card PairClassifier(Rank rank_in);
-
-  // returns the rank of 3 of a kind cards (or NONE if none exist)
-  Card ThreeKindClassifier(Rank rank_in);
-
-  // returns true if a flush exists
-  Card FlushClassifier();
-
-  // returns true if a straight exists
-  Card StraightClassifier();
-
-  // full house, four of a kind, straight flush, and royal flush can be
-  // determined with the above functions.
-
- private:
-  std::vector<Card> cards;
-  std::pair<Type, int> handValue;
+  Classifier classifier;
 };
 
 #endif  // decider.hpp

@@ -7,41 +7,23 @@ using namespace std;
 int main() {
   vector<Card> cards;
 
-  cards.push_back(Card(THREE, HEARTS));
-  cards.push_back(Card(TWO, SPADES));
+  cards.push_back(Card(KING, DIAMONDS));
+  cards.push_back(Card(QUEEN, DIAMONDS));
   cards.push_back(Card(FIVE, HEARTS));
-  cards.push_back(Card(ACE, DIAMONDS));
-  cards.push_back(Card(ACE, HEARTS));
-  cards.push_back(Card(QUEEN, HEARTS));
-  cards.push_back(Card(QUEEN, HEARTS));
+  cards.push_back(Card(SEVEN, SPADES));
+  cards.push_back(Card(SEVEN, CLUBS));
 
-  Classifier* classifier = new Classifier(cards);
+  vector<pair<Card, Card>> hands = {{Card(ACE, SPADES), Card(KING, HEARTS)}};
 
-  cout << "classifier created successfully\n";
+  // Add another pair of Card objects
+  hands.push_back({Card(SEVEN, HEARTS), Card(TWO, CLUBS)});
 
-  Card card = classifier->HighCardClassifier();
+  Decider* decider = new Decider(hands, cards);
 
-  // for(int i = 0; i < cards.size(); ++i){
-  //   cout << cards[i].printCard() << "\n";
-  // }
+  pair<int, pair<Hand, Card>> winnerData = decider->determineWinner();
 
-  cout << card.printCard() << " is the highest card\n";
+  cout << winnerData.first << " won with a "
+       << winnerData.second.second.printCard() << endl;
 
-  card = classifier->PairClassifier(NONE);
-  cout << "player has a pair of " << card.printRank() << "S.\n";
-
-  card = classifier->PairClassifier(card.getRank());
-  if (card.getRank() != NONE) {
-    cout << "player has a pair of " << card.printRank() << "S.\n";
-  }
-
-  card = classifier->ThreeKindClassifier(NONE);
-  if (card.getRank() != NONE) {
-    cout << "player has a three of a kind of " << card.printRank() << "S.\n";
-  }
-
-  card = classifier->FlushClassifier();
-  if (card.getRank() != NONE) {
-    cout << "player has a flush with 5 " << card.printSuit() << ".\n";
-  }
+  cout << "decider created successfully\n";
 }
