@@ -27,14 +27,16 @@ class Player {
   virtual void play(int& currentBet, int& pot, int& num_players,
                     int& previous_raise) = 0;
 
+  virtual void addStack(int val) { stack += val; }
+
   // returns player stack.
   virtual int getStack() const { return stack; }
 
   // returns whether player has folded
-  virtual bool has_folded_func(){return has_folded;}
-  //returns whether player is all in
-  virtual bool is_all_in_func(){return is_all_in;}
-  
+  virtual bool has_folded_func() { return has_folded; }
+ 
+  // returns whether player is all in
+  virtual bool is_all_in_func() { return is_all_in; }
 
   // sets fold status
   virtual void has_folded_setter() { has_folded = true; }
@@ -50,27 +52,33 @@ class Player {
 
   // returns total bet in this round of betting
   // NOT tracked across preflop, flop, river, etc.
+  virtual const int& getRoundBet() const { return round_bet; }
   virtual const int& getTotalBet() const { return total_bet; }
 
+  std::pair<Card, Card> getHand() { return hand; }
+
   // maintains the correct value of the player's bets and stack. "bet" is the
-  // current amount of money going into the pot. "total_bet" is the total money
+  // current amount of money going into the pot. "round_bet" is the total money
   // paid this round. stack is the player's total amount of money.
   virtual const void setBets_Stack(int bet_in) {
     bet = bet_in;
     stack -= bet_in;
-    total_bet += bet_in;
+    round_bet += bet_in;
     if (bet_in == 0) {
-      total_bet = 0;  // when new round of betting has started, reset total_bet
+      round_bet = 0;  // when new round of betting has started, reset round_bet
     }
+    total_bet += bet_in;
   }
 
  private:
-  std::pair<Card, Card> hand = {Card(TWO, CLUBS), Card(TWO, SPADES)};  // player's hand
-  int stack = 0;               // player's stack
-  bool has_folded = false;     // tracks fold status
-  bool is_all_in = false;      // tracks all in status
-  int bet = 0;                 // current bet (tracked in case of reraise)
-  int total_bet = 0;  // total bet, including what was bet before a reraise
+  std::pair<Card, Card> hand = {Card(TWO, CLUBS),
+                                Card(TWO, SPADES)};  // player's hand
+  int stack = 0;                                     // player's stack
+  bool has_folded = false;                           // tracks fold status
+  bool is_all_in = false;                            // tracks all in status
+  int bet = 0;        // current bet (tracked in case of reraise)
+  int round_bet = 0;  // bet by round, including what was bet before a reraise
+  int total_bet = 0;  // total bet over a game
   std::string name;   // player's name
   std::string type;   // human or bot
 };

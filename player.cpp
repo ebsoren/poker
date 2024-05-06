@@ -75,9 +75,9 @@ void Human::play(int &currentBet, int &pot, int &num_players, int &prevRaise) {
     ;
     if (currentBet - getBet() == getStack()) {
       cout << " and went all in";
-      cout << ".\n";
       all_in_setter();
     }
+    cout << ".\n";
 
     pot += currentBet - getBet();
     setBets_Stack(currentBet - getBet());
@@ -87,9 +87,8 @@ void Human::play(int &currentBet, int &pot, int &num_players, int &prevRaise) {
 
   // raise block
   else if (decision == "raise") {
-    cout << "How much do you want to raise? $" 
-         << 2 * currentBet - prevRaise << " minimum.\nTo go all in, bet $" << getStack()
-         << ".\n";
+    cout << "How much do you want to raise? $" << 2 * currentBet - prevRaise
+         << " minimum.\nTo go all in, bet $" << getStack() << ".\n";
 
     int raise_value;
     int check_value = 2 * currentBet - prevRaise;

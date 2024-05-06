@@ -17,7 +17,7 @@ enum Rank {
   QUEEN = 12,
   KING = 13,
   ACE = 14,
-  NONE = 15,  // used when we need a "did not get a rank" returned
+  NONE = 0,  // used when we need a "did not get a rank" returned
 };
 
 enum Suit {
@@ -25,7 +25,7 @@ enum Suit {
   SPADES = 1,
   DIAMONDS = 2,
   HEARTS = 3,
-  NONEs = 4,  // used as a placeholder suit
+
 };
 
 class Card {

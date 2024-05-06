@@ -40,19 +40,28 @@ class Round {
   // EX: p1 bets -> p2 raises -> p3 calls -> p4 folds -> p1 calls -> move on
 
   bool checkIfContinue();
-  
+
   // runs through each player's turn until checkIfContinue evaluates to true, as
   // which point we move to the next round of betting.
   void playAll();
 
   // prints out players' cards after the final round of betting.
-  void show_cards();
+  bool show_cards();
 
   // resets each player's current bet, total bet, and the pot size.
   void resetBets();
 
   // adds a card to the community cards.
   void addCommunityCard();
+
+  std::vector<std::pair<Card, Card>> getHands();
+
+  std::vector<Card> getCommunityCards(){ return community_cards;}
+
+  int getPot(){return pot;}
+
+
+  void moveChips();
 
  private:
   int pot = 0;             // pot size

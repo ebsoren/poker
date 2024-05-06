@@ -55,12 +55,18 @@ class Classifier {
   void setCards(std::vector<Card> cards_in) { cards = cards_in; }
   void sortCards();
 
-  std::pair<Hand, Card> getBestHand();
+  std::pair<Hand, std::vector<Card>> getBestHand();
 
-   void resetBestHand(){
-    bestHand = {HIGHCARD,{TWO, SPADES}};
+  void resetBestHand() {
+    std::vector<Card> temp;
+    temp.push_back(Card(NONE, SPADES));
+
+    bestHand = {HIGHCARD, temp};
     found_hand = false;
   }
+
+  int getWinLoc() { return winLoc; }
+  void setWinLoc(int wl_in) { winLoc = wl_in; }
 
   // void printHand();
 
@@ -68,28 +74,29 @@ class Classifier {
   std::vector<Card> cards;
 
   // best hand for player
-  std::pair<Hand, Card> bestHand;
+  std::pair<Hand, std::vector<Card>> bestHand;
+  int winLoc = 0;
+
   bool found_hand = false;
-}; // end classifier
-
-
-
-
+};  // end classifier
 
 class Decider {
  public:
   // constructor; brings in the hands left and the community cards
-  Decider(std::vector<std::pair<Card, Card> > hands, std::vector<Card> cards);
+  Decider(std::vector<std::pair<Card, Card>> hands, std::vector<Card> cards);
 
   // destructor
   ~Decider();
 
   void determineHand(const std::vector<Card>& hand);
- 
-  std::pair<int, std::pair<Hand, Card> > determineWinner();
+
+  std::pair<std::pair<int, int>, std::pair<Hand, std::vector<Card>>>
+  determineWinner();
+
+  void compEqualHands(const vector<Card>& best, const vector<Card>& candidate);
 
  private:
-  std::vector<std::pair<Card, Card> > allHands;
+  std::vector<std::pair<Card, Card>> allHands;
   std::vector<Card> community_cards;
   Classifier classifier;
 };

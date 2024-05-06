@@ -1,6 +1,9 @@
+#include <iostream>
+#include <algorithm>  
+#include <random> 
+
 #include "pack.hpp"
 
-#include <iostream>
 
 using namespace std;
 
@@ -14,9 +17,16 @@ Pack::Pack() {
       cards.emplace_back(static_cast<Rank>(rank), static_cast<Suit>(suit));
     }
   }
+  shuffle_pack();
 }
 // Shuffles the cards in the pack. shuffle implementation needed.
-void Pack::shuffle() {}
+void Pack::shuffle_pack() {
+random_device rd;
+    default_random_engine rng(rd());
+
+    // Shuffle the cards in the vector
+    shuffle(cards.begin(), cards.end(), rng);
+}
 
 // Deals one card from the top of the pack. Will also be used to deal cards for
 // the flop, turn, and river.

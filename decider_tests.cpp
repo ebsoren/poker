@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include "player.hpp"
 #include "decider.hpp"
 
 using namespace std;

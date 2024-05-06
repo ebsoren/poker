@@ -30,10 +30,10 @@ void Round::postflop(const string current_round) {
   }
   pack.burnCard();
   addCommunityCard();
-  if(current_round == "flop"){
-    addCommunityCard(); 
-    addCommunityCard(); 
-  } 
+  if (current_round == "flop") {
+    addCommunityCard();
+    addCommunityCard();
+  }
   cout << "\nit is the " << current_round << "\nThe cards are: \n";
   for (int i = 0; i < community_cards.size(); ++i) {
     cout << community_cards[i].printCard() << endl;
@@ -47,13 +47,18 @@ void Round::postflop(const string current_round) {
 void Round::checkWinner() {
   for (int i = 0; i < players.size(); ++i) {
     if (num_players == 1 && !players[i]->has_folded_func()) {
-      cout << players[i]->getName() << " Wins the round\n";
+      cout << players[i]->getName() << " wins the round and gains $"
+           << getPot() - players[i]->getTotalBet() << ".\n";
+
       return;
     }
   }
 }
 
-void Round::show_cards() {
+bool Round::show_cards() {
+  if (num_players == 1) {
+    return false;
+  }
   cout << "Players show cards.\n\n";
   for (int i = 0; i < players.size(); ++i) {
     if (!players[i]->has_folded_func()) {
@@ -62,6 +67,7 @@ void Round::show_cards() {
            << players[i]->getHand().second.printCard() << "\n\n";
     }
   }
+  return true;
 }
 
 void Round::playAll() {
@@ -87,7 +93,7 @@ bool Round::checkIfContinue() {
   vector<int> betSizes;
   for (int i = 0; i < players.size(); ++i) {
     if (!players[i]->has_folded_func()) {
-      betSizes.push_back(players[i]->getTotalBet());
+      betSizes.push_back(players[i]->getRoundBet());
     }
   }
 
@@ -99,3 +105,15 @@ bool Round::checkIfContinue() {
 }
 
 void Round::addCommunityCard() { community_cards.push_back(pack.dealCard()); }
+
+vector<pair<Card, Card>> Round::getHands() {
+  vector<pair<Card, Card>> returnhands;
+  for (int i = 0; i < players.size(); ++i) {
+    if (players[i]->has_folded_func()) {
+      returnhands.push_back({Card(NONE, SPADES), Card(NONE, SPADES)});
+    } else {
+      returnhands.push_back(players[i]->getHand());
+    }
+  }
+  return returnhands;
+}

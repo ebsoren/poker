@@ -16,7 +16,7 @@ class Pack {
   Pack();
 
   // Shuffles the cards in the pack
-  void shuffle();
+  void shuffle_pack();
 
   // Deals one card from the top of the pack
   Card dealCard();
