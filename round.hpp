@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "card.hpp"
+#include "decider.hpp"
 #include "pack.hpp"
 #include "player.hpp"
 
@@ -18,8 +19,8 @@ class Round {
   // destructor
   ~Round();
 
-  // deals two cards to each player.
-  void setup();
+  // deals two cards to each player and sets blinds
+  void setup(int &blind_loc);
 
   // runs the preflop and checks for a winner. mostly taken care of by the
   // playAll function.
@@ -56,18 +57,35 @@ class Round {
 
   std::vector<std::pair<Card, Card>> getHands();
 
-  std::vector<Card> getCommunityCards(){ return community_cards;}
+  std::vector<Card> getCommunityCards() { return community_cards; }
 
-  int getPot(){return pot;}
+  int getPot() { return pot; }
 
+  bool getGameOver() { return game_over; }
 
-  void moveChips();
+  void printWinner(
+      std::pair<std::pair<int, int>, std::pair<Hand, std::vector<Card>>> Data);
+
+  void reset() {
+    pot = 0;
+    sidePot = 0;
+    currentBet = 0;
+    previous_raise = 0;
+    pack.resetPack();
+    pack.shuffle_pack();
+    community_cards.clear();
+    for (const auto& ptr : players) {
+      ptr->reset();
+    }
+  }
 
  private:
   int pot = 0;             // pot size
+  int sidePot = 0;         // side pot size
   int num_players = 0;     // number of players
   int currentBet = 0;      // current bet. used for calculations
   int previous_raise = 0;  // previous raise, used for calculations
+  bool game_over = false;
 
   std::vector<Card> community_cards;              // flop, turn, river cards
   std::vector<std::unique_ptr<Player>>& players;  // player list

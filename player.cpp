@@ -9,34 +9,80 @@ Player::~Player() {}
 Human::Human(const std::string &name, const std::string &type, int stack)
     : Player(name, type, stack) {}
 
-void Human::play(int &currentBet, int &pot, int &num_players, int &prevRaise) {
+void Human::play(int &currentBet, int &pot, int &num_players, int &prevRaise, bool &blindRaise) {
   // Skip turn if player has folded or is all in
   if (has_folded_func() || is_all_in_func()) {
+   
     return;
   }
 
-  // If we aren't at a checking point or we have already called, skip the turn.
-  // By the nature of poker, once this is the case for the player at the end of
-  // the action, it is for all. For example, bet 5 -> call -> call -> call; all
-  // players are at currentBet Also: bet 5 -> raise 10 -> call -> call -> 5
-  // bettor calls; again, everyone is at currentBet, and the round should
-  // proceed.
+  string decision;  // will be used to read in all inputs.
+
   if (currentBet != 0 && currentBet == getBet()) {
+
+    if (getBlind() == 2) {
+     
+
+      cout << getName()
+           << ", everyone called the big blind. Do you check or raise?\n";
+      getline(cin, decision);
+      while (decision != "raise" && decision != "check") {
+        cout << "Please type 'check' or 'raise'. \n";
+        getline(cin, decision);
+      }
+
+      if (decision == "raise") {
+        cout << "How much do you want to raise? $" << 2 * currentBet - prevRaise
+             << " minimum.\nTo go all in, bet $" << getStack() << ".\n";
+
+        int raise_value;
+        int check_value = 2 * currentBet - prevRaise;
+        blindRaise = true;
+
+        readInput(raise_value, check_value);
+        if (raise_value == getStack()) {
+          cout << getName() << " went all in.\n";
+          all_in_setter();
+
+        } else {
+          cout << getName() << " raised $" << raise_value << ".\n";
+          pot += raise_value;
+
+          setBets_Stack(raise_value);
+          currentBet = raise_value;
+          setBlind(0);
+
+              return;
+        }
+
+      } else {
+        cout << getName() << " checked.\n";
+      }
+      setBlind(0);
+      return;
+    }
     return;
   }
 
   printPlayerData();  // simply prints an interface. No values changed.
 
-  string decision;  // will be used to read in all inputs.
+  bool is_blind = blinds(pot, currentBet, prevRaise);
+  if (is_blind) {
+    return;
+   
+  }
 
   // if nobody has bet, call the bet_or_check decider function and end.
   if (currentBet == 0) {
+ 
     bet_or_check(decision, pot, currentBet);
     return;
   }
 
   // since currentBet is greater than 0, decide fold, call, or raise
-
+if(blindRaise){
+  resetBet();
+}
   if (getStack() < (2 * currentBet - prevRaise)) {
     if (getStack() <= currentBet - getBet()) {
       cout << "Do you fold or go all in ($" << getStack() << ")?\n";
@@ -72,7 +118,7 @@ void Human::play(int &currentBet, int &pot, int &num_players, int &prevRaise) {
     // call block
   } else if (decision == "call") {
     cout << getName() << " called $" << currentBet - getBet();
-    ;
+
     if (currentBet - getBet() == getStack()) {
       cout << " and went all in";
       all_in_setter();
@@ -81,6 +127,7 @@ void Human::play(int &currentBet, int &pot, int &num_players, int &prevRaise) {
 
     pot += currentBet - getBet();
     setBets_Stack(currentBet - getBet());
+ 
 
     return;
   }
@@ -97,14 +144,17 @@ void Human::play(int &currentBet, int &pot, int &num_players, int &prevRaise) {
     if (raise_value == getStack()) {
       cout << getName() << " went all in.\n";
       all_in_setter();
+
     } else {
       cout << getName() << " raised $" << raise_value << ".\n";
     }
 
     pot += raise_value;
+
     setBets_Stack(raise_value);
     prevRaise = currentBet;
     currentBet = raise_value;
+
     return;
   }
 
@@ -117,6 +167,35 @@ void Human::play(int &currentBet, int &pot, int &num_players, int &prevRaise) {
   all_in_setter();
 
 }  // END OF PLAY FUNCTION
+
+bool Human::blinds(int &pot, int &currentBet, int &prevRaise) {
+  if (getBlind() == 1) {
+    cout << "You are the small blind and bet $" << getSmallBlind() << ".\n";
+    if (getStack() == getSmallBlind()) {
+      all_in_setter();
+      cout << getName() << " is all in.\n";
+    }
+    pot += getSmallBlind();
+    setBets_Stack(getSmallBlind());
+    currentBet = getSmallBlind();
+    setBlind(0);
+    return true;
+  }
+  if (getBlind() == 2) {
+    cout << "You are the big blind and bet $" << getBigBlind() << ".\n";
+    if (getStack() == getBigBlind()) {
+      cout << getName() << " is all in.\n";
+      all_in_setter();
+    }
+    pot += getBigBlind();
+    setBets_Stack(getBigBlind());
+    prevRaise = currentBet;
+    currentBet = getBigBlind();
+
+    return true;
+  }
+  return false;
+}
 
 void Human::printPlayerData() const {
   cout << getName() << ": You have $" << getStack()
@@ -138,14 +217,14 @@ void Human::bet_or_check(string &decision, int &pot, int &currentBet) {
     cout << "\nHow much?\nTo go all in, bet " << getStack() << ".\n";
     int readVal;
     readInput(readVal, currentBet);
-    pot += readVal;
+
     if (readVal == getStack()) {
       cout << getName() << " went all in.\n";
       all_in_setter();
     } else {
       cout << getName() << " bet $" << readVal << ".\n\n";
     }
-
+    pot += readVal;
     setBets_Stack(readVal);
     currentBet = readVal;
   } else if (decision == "check") {
@@ -183,7 +262,12 @@ bool Human::checkBetInput(int &val_in, int &stack_val, int &raise_val,
   return true;
 }
 
+
+
+
+
+
 // play for bot has not been implemented.
-void Bot::play(int &currentBet, int &pot, int &num_players, int &prevRaise) {
+void Bot::play(int &currentBet, int &pot, int &num_players, int &prevRaise, bool &blindRaise) {
   cout << "bot folded\n";
 }

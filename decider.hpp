@@ -45,6 +45,7 @@ class Classifier {
   void threeKindClassifier();
 
   void fourKindClassifier();
+  void fullHouseClassifier();
 
   // returns true if a flush exists
   void flushClassifier();
@@ -93,12 +94,16 @@ class Decider {
   std::pair<std::pair<int, int>, std::pair<Hand, std::vector<Card>>>
   determineWinner();
 
-  void compEqualHands(const vector<Card>& best, const vector<Card>& candidate);
+  bool compEqualHands(const std::pair<Hand, std::vector<Card>>& best,
+                      const std::vector<Card>& candidate);
+
+  void printWinningHand(const Hand& hand, const Card& card);
 
  private:
   std::vector<std::pair<Card, Card>> allHands;
   std::vector<Card> community_cards;
   Classifier classifier;
+  bool isTie;
 };
 
 #endif  // decider.hpp

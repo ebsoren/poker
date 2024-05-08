@@ -25,7 +25,7 @@ class Player {
 
   // virtual function. Implemented separately for different types of player.
   virtual void play(int& currentBet, int& pot, int& num_players,
-                    int& previous_raise) = 0;
+                    int& previous_raise, bool &blindRaise) = 0;
 
   virtual void addStack(int val) { stack += val; }
 
@@ -34,7 +34,7 @@ class Player {
 
   // returns whether player has folded
   virtual bool has_folded_func() { return has_folded; }
- 
+
   // returns whether player is all in
   virtual bool is_all_in_func() { return is_all_in; }
 
@@ -43,6 +43,8 @@ class Player {
 
   // sets all in status
   virtual void all_in_setter() { is_all_in = true; }
+  virtual void resetBet() { bet = 0; }
+
 
   // returns player name
   virtual const std::string& getName() const { return name; }
@@ -54,6 +56,16 @@ class Player {
   // NOT tracked across preflop, flop, river, etc.
   virtual const int& getRoundBet() const { return round_bet; }
   virtual const int& getTotalBet() const { return total_bet; }
+  virtual const int& getBlind() const { return blind; }
+
+  virtual const int& getBigBlind() const { return bigBlind; }
+  virtual const int& getSmallBlind() const { return smallBlind; }
+
+ 
+
+
+
+  void setBlind(int b) { blind = b; }
 
   std::pair<Card, Card> getHand() { return hand; }
 
@@ -70,12 +82,26 @@ class Player {
     total_bet += bet_in;
   }
 
+  virtual void reset() {
+    has_folded = false;
+    is_all_in = false;
+    bet = 0;
+    round_bet = 0;
+    total_bet = 0;
+    blind = 0;
+  }
+
  private:
   std::pair<Card, Card> hand = {Card(TWO, CLUBS),
                                 Card(TWO, SPADES)};  // player's hand
   int stack = 0;                                     // player's stack
   bool has_folded = false;                           // tracks fold status
   bool is_all_in = false;                            // tracks all in status
+  int blind = 0;  // 0 is no blind; 1 is small blind; 2 is big blind
+
+  int smallBlind = 20;
+  int bigBlind = 40;
+
   int bet = 0;        // current bet (tracked in case of reraise)
   int round_bet = 0;  // bet by round, including what was bet before a reraise
   int total_bet = 0;  // total bet over a game
@@ -87,7 +113,7 @@ class Bot : public Player {
  public:
   using Player::Player;
   void play(int& currentBet, int& pot, int& num_players,
-            int& previous_Raise) override;
+            int& previous_Raise, bool &blindRaise) override;
 };
 
 class Human : public Player {
@@ -99,7 +125,7 @@ class Human : public Player {
   // it through turns. pot tracks the total pot size for a round. prevRaise is a
   // less important variable which is used to calculate the minimum raise.
   void play(int& currentBet, int& pot, int& num_players,
-            int& previous_raise) override;
+            int& previous_raise, bool &blindRaise) override;
 
   // prints interface data for players, including name, stack size, and hand.
   void printPlayerData() const;
@@ -116,6 +142,7 @@ class Human : public Player {
   // size and, in the case of a previous player raising, at least the minimum
   // raise allowed by hold'em rules. Called in the readInput function.
   bool checkBetInput(int& val_in, int& stack_val, int& raise_val, bool isRaise);
+  bool blinds(int &pot, int &currentBet, int &prevRaise);
 };
 
 #endif
