@@ -16,40 +16,30 @@ void Round::setup(int& blind_loc) {
   }
 
   num_players = players.size();
-  if(blind_loc == players.size()-1){
-     players[blind_loc]->setBlind(1);
-  players[0]->setBlind(2);
-  blind_loc = -1;
-  }
-  else{
-    players[blind_loc]->setBlind(1);
-    players[blind_loc+1]->setBlind(2);
-  }
-  ++blind_loc;
- 
+  players[0]->setIsBlind(1);
+  players[1]->setIsBlind(2);
 }
 
 void Round::preflop() {
   cout << "\nit is the preflop\n" << endl;
-  
-  playAll();
+
+  playAll(starter);
   checkWinner();
- 
 }
 
 void Round::postflop(const string current_round) {
   if (num_players <= 1) {
     return;
   }
-  //int counter = 0;
-  //for(int i = 0; i < players.size(); ++i){
-  //  if(players[i]->is_all_in_func() || players[i]->has_folded_func()){
-  //    ++counter;
-  //  }
-  //}
-  //if(counter > players.size()-1){
-  //  return;
-  //}
+  // int counter = 0;
+  // for(int i = 0; i < players.size(); ++i){
+  //   if(players[i]->is_all_in_func() || players[i]->has_folded_func()){
+  //     ++counter;
+  //   }
+  // }
+  // if(counter > players.size()-1){
+  //   return;
+  // }
   pack.burnCard();
   addCommunityCard();
   if (current_round == "flop") {
@@ -62,7 +52,7 @@ void Round::postflop(const string current_round) {
   }
   currentBet = 0;
 
-  playAll();
+  playAll(starter);
   checkWinner();
 }
 
@@ -83,7 +73,7 @@ bool Round::show_cards() {
   }
 
   cout << "\nThe community cards are:\n\n";
-  for(int i = 0; i < community_cards.size(); ++i){
+  for (int i = 0; i < community_cards.size(); ++i) {
     cout << community_cards[i].printCard() << "\n";
   }
   cout << "\nPlayers show cards.\n\n";
@@ -97,22 +87,34 @@ bool Round::show_cards() {
   return true;
 }
 
-void Round::playAll() {
-  bool blindRaise = false;
-  for (int i = 0; i < players.size(); ++i) {
-    players[i]->play(currentBet, pot, num_players, previous_raise, blindRaise);
+void Round::playAll(int& starter) {
+  for (int i = starter; i <= players.size(); ++i) {
+    if (i == players.size()) {
+      for (int j = 0; j < starter; ++j) {
+        players[j]->play(currentBet, pot, num_players, previous_raise);
+      }
+    } else {
+      players[i]->play(currentBet, pot, num_players, previous_raise);
+    }
   }
 
+// MAKE THIS RECURSIVE!!! DEPENDING ON RAISE OR NOT
   while (!checkIfContinue()) {
-    for (int i = 0; i < players.size(); ++i) {
-      players[i]->play(currentBet, pot, num_players, previous_raise, blindRaise);
+    for (int i = starter; i <= players.size(); ++i) {
+      if (i == players.size()) {
+        for (int j = 0; j < starter; ++j) {
+          players[j]->play(currentBet, pot, num_players, previous_raise);
+        }
+      } else {
+        players[i]->play(currentBet, pot, num_players, previous_raise);
+      }
     }
   }
 }
 
 void Round::resetBets() {
   for (int i = 0; i < players.size(); ++i) {
-    players[i]->setBets_Stack(0);
+    players[i]->setValues(0);
   }
   previous_raise = 0;
 }
@@ -124,11 +126,14 @@ bool Round::checkIfContinue() {
     if (!players[i]->has_folded_func()) {
       betSizes.push_back(players[i]->getRoundBet());
     }
-    if(players[i]->is_all_in_func()){
+    if (players[i]->is_all_in_func() || players[i]->has_folded_func()) {
       ++counter;
     }
+    if (players[i]->getIsBlind() != 0 && num_players > 1) {
+      return false;
+    }
   }
-  if(counter >= players.size()-1){
+  if (counter >= players.size() - 1) {
     return true;
   }
 
@@ -138,7 +143,7 @@ bool Round::checkIfContinue() {
 
   // if everybody is all in continue
   // if everybody except for one person is all in
-  // 
+  //
 
   return false;
 }
@@ -157,31 +162,29 @@ vector<pair<Card, Card>> Round::getHands() {
   return returnhands;
 }
 
-void Round::printWinner(pair<pair<int, int>, pair<Hand, vector<Card>>> winnerData){
+void Round::printWinner(
+    pair<pair<int, int>, pair<Hand, vector<Card>>> winnerData) {
   cout << "and gains $"
-         << getPot() - players[winnerData.first.first]->getTotalBet() << ".\n";
-    players[winnerData.first.first]->addStack(getPot());
+       << getPot() - players[winnerData.first.first]->getTotalBet() << ".\n";
+  players[winnerData.first.first]->addStack(getPot());
 
-    for (auto it = players.begin(); it != players.end();) {
-      if ((*it)->getStack() == 0) {
-        cout << (*it)->getName() << " is out of the game.\n";
-        it = players.erase(it);
-      } else {
-        ++it;
-      }
-    }
-    if (players.size() == 1) {
-      cout << players[0]->getName() << " wins! Their payout is $"
-           << players[0]->getStack() << ".\n";
-           game_over = true;
+  for (auto it = players.begin(); it != players.end();) {
+    if ((*it)->getStack() == 0) {
+      cout << (*it)->getName() << " is out of the game.\n";
+      it = players.erase(it);
     } else {
-      cout << "\nThe remaining players are:\n";
-      for (const auto &playerPtr : players) {
-        cout << playerPtr->getName() << endl;
-      }
-      cout << "\n\nNew Round\n\n";
+      ++it;
     }
+  }
+  if (players.size() == 1) {
+    cout << players[0]->getName() << " wins! Their payout is $"
+         << players[0]->getStack() << ".\n";
+    game_over = true;
+  } else {
+    cout << "\nThe remaining players are:\n";
+    for (const auto& playerPtr : players) {
+      cout << playerPtr->getName() << endl;
+    }
+    cout << "\n\nNew Round\n\n";
+  }
 }
-
-
-

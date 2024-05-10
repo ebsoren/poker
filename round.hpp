@@ -44,7 +44,7 @@ class Round {
 
   // runs through each player's turn until checkIfContinue evaluates to true, as
   // which point we move to the next round of betting.
-  void playAll();
+  void playAll(int &starter);
 
   // prints out players' cards after the final round of betting.
   bool show_cards();
@@ -77,6 +77,10 @@ class Round {
     for (const auto& ptr : players) {
       ptr->reset();
     }
+    ++starter;
+    if(starter == players.size()){
+      starter = 0;
+    }
   }
 
  private:
@@ -86,6 +90,7 @@ class Round {
   int currentBet = 0;      // current bet. used for calculations
   int previous_raise = 0;  // previous raise, used for calculations
   bool game_over = false;
+  int starter = 0;
 
   std::vector<Card> community_cards;              // flop, turn, river cards
   std::vector<std::unique_ptr<Player>>& players;  // player list
