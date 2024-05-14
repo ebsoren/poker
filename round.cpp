@@ -7,23 +7,60 @@ Round::Round(std::vector<std::unique_ptr<Player>>& players)
 
 Round::~Round() {}
 
-void Round::setup(int& blind_loc) {
-  for (int i = 0; i < players.size(); ++i) {
-    players[i]->setHandFirst(pack.dealCard());
+void Round::setup(int& starter) {
+  if (starter == players.size() || starter == 0) {
+    prev_player_in = players[players.size() - 1]->getName();
+  } else {
+    prev_player_in = players[starter - 1]->getName();
   }
-  for (int i = 0; i < players.size(); ++i) {
-    players[i]->setHandSecond(pack.dealCard());
+  for (int i = starter; i <= players.size(); ++i) {
+    if (i == players.size()) {
+      for (int j = 0; j < starter; ++j) {
+        players[j]->setHandFirst(pack.dealCard());
+        if (j == 0) {
+          players[j]->setPrevPlayer(players[players.size() - 1]->getName());
+        } else {
+          players[j]->setPrevPlayer(players[j - 1]->getName());
+        }
+      }
+    } else {
+      players[i]->setHandFirst(pack.dealCard());
+      if (i == 0) {
+        players[i]->setPrevPlayer(players[players.size() - 1]->getName());
+      } else {
+        players[i]->setPrevPlayer(players[i - 1]->getName());
+      }
+    }
+  }
+
+  for (int i = starter; i <= players.size(); ++i) {
+    if (i == players.size()) {
+      for (int j = 0; j < starter; ++j) {
+        players[j]->setHandSecond(pack.dealCard());
+      }
+    } else {
+      players[i]->setHandSecond(pack.dealCard());
+    }
   }
 
   num_players = players.size();
-  players[0]->setIsBlind(1);
-  players[1]->setIsBlind(2);
+  if (starter == players.size()) {
+    players[0]->setIsBlind(1);
+    players[1]->setIsBlind(2);
+  } else if (starter == players.size() - 1) {
+    players[starter]->setIsBlind(1);
+    players[0]->setIsBlind(2);
+  } else {
+    players[starter]->setIsBlind(1);
+    players[starter + 1]->setIsBlind(2);
+  }
+  ++starter;
 }
 
 void Round::preflop() {
   cout << "\nit is the preflop\n" << endl;
 
-  playAll(starter);
+  playAll(starter, prev_player_in);
   checkWinner();
 }
 
@@ -52,7 +89,7 @@ void Round::postflop(const string current_round) {
   }
   currentBet = 0;
 
-  playAll(starter);
+  playAll(starter, prev_player_in);
   checkWinner();
 }
 
@@ -87,26 +124,20 @@ bool Round::show_cards() {
   return true;
 }
 
-void Round::playAll(int& starter) {
-  for (int i = starter; i <= players.size(); ++i) {
-    if (i == players.size()) {
-      for (int j = 0; j < starter; ++j) {
-        players[j]->play(currentBet, pot, num_players, previous_raise);
-      }
-    } else {
-      players[i]->play(currentBet, pot, num_players, previous_raise);
-    }
-  }
-
-// MAKE THIS RECURSIVE!!! DEPENDING ON RAISE OR NOT
-  while (!checkIfContinue()) {
+void Round::playAll(int& starter, string& prev_player_in) {
+  // MAKE THIS RECURSIVE!!! DEPENDING ON RAISE OR NOT
+  bool first = true;
+  pair<bool, int> bigBlindRaised = {false, 0};
+  while (!checkIfContinue(first)) {
     for (int i = starter; i <= players.size(); ++i) {
       if (i == players.size()) {
         for (int j = 0; j < starter; ++j) {
-          players[j]->play(currentBet, pot, num_players, previous_raise);
+          players[j]->play(currentBet, pot, num_players, previous_raise,
+                           bigBlindRaised, prev_player_in);
         }
       } else {
-        players[i]->play(currentBet, pot, num_players, previous_raise);
+        players[i]->play(currentBet, pot, num_players, previous_raise,
+                         bigBlindRaised, prev_player_in);
       }
     }
   }
@@ -119,9 +150,15 @@ void Round::resetBets() {
   previous_raise = 0;
 }
 
-bool Round::checkIfContinue() {
+bool Round::checkIfContinue(bool& first_round) {
   vector<int> betSizes;
   int counter = 0;
+
+  if (first_round) {
+    first_round = false;
+    return false;
+  }
+
   for (int i = 0; i < players.size(); ++i) {
     if (!players[i]->has_folded_func()) {
       betSizes.push_back(players[i]->getRoundBet());
@@ -140,10 +177,6 @@ bool Round::checkIfContinue() {
   if (std::equal(betSizes.begin() + 1, betSizes.end(), betSizes.begin())) {
     return true;
   }
-
-  // if everybody is all in continue
-  // if everybody except for one person is all in
-  //
 
   return false;
 }

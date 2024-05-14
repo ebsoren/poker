@@ -14,16 +14,16 @@ using namespace std;
 int main() {
   std::vector<std::unique_ptr<Player>> players;
 
-  // Create and add four new Human players to the vector
+
   players.emplace_back(std::make_unique<Human>("Esben", "Human", 1000));
   players.emplace_back(std::make_unique<Human>("Adam buns", "Human", 1000));
    players.emplace_back(std::make_unique<Human>("Ben", "Human", 1000));
   // players.emplace_back(std::make_unique<Human>("Tyler", "Human", 1000));
 
   Round *round = new Round(players);
-  int blindLoc = 0;
+  int temp_starter = 0;
   while (!round->getGameOver()) {
-    round->setup(blindLoc);
+    round->setup(temp_starter);
     round->preflop();
     round->resetBets();
     round->postflop("flop");

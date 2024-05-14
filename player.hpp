@@ -25,7 +25,8 @@ class Player {
 
   // virtual function. Implemented separately for different types of player.
   virtual void play(int& currentBet, int& pot, int& num_players,
-                    int& previous_raise) = 0;
+                    int& previous_raise, std::pair<bool, int>& bigBlindRaised,
+                    std::string& player_in) = 0;
 
   virtual void addStack(int val) { stack += val; }
 
@@ -49,16 +50,23 @@ class Player {
 
   // returns player's current bet
   virtual const int& getBet() const { return bet; }
+  virtual void setBet(int in) { bet = in; }
 
   // returns total bet in this round of betting
   // NOT tracked across preflop, flop, river, etc.
   virtual const int& getRoundBet() const { return round_bet; }
+
+  // returns total bet tracked ACROSS preflop, river, etc.
   virtual const int& getTotalBet() const { return total_bet; }
 
   virtual const int& getBigBlind() const { return bigBlind; }
   virtual const int& getSmallBlind() const { return smallBlind; }
+
   virtual const int& getIsBlind() const { return isBlind; }
   virtual void setIsBlind(int val_in) { isBlind = val_in; }
+
+  virtual void setPrevPlayer(std::string player_in) { prev_player = player_in; }
+  virtual const std::string& getPrevPlayer() const { return prev_player; }
 
   std::pair<Card, Card> getHand() { return hand; }
 
@@ -101,13 +109,15 @@ class Player {
   int total_bet = 0;  // total bet over a game
   std::string name;   // player's name
   std::string type;   // human or bot
+  std::string prev_player;  // previous player's name
 };
 
 class Bot : public Player {
  public:
   using Player::Player;
-  void play(int& currentBet, int& pot, int& num_players,
-            int& previous_Raise) override;
+  void play(int& currentBet, int& pot, int& num_players, int& previous_Raise,
+            std::pair<bool, int>& bigBlindRaised,
+            std::string &player_in) override;
 };
 
 class Human : public Player {
@@ -115,14 +125,16 @@ class Human : public Player {
   Human(const std::string& name, const std::string& type, int stack);
 
   // runs through the blinds round of betting.
-  bool handleBlinds(int& currentBet, int& pot, int&num_players);
+  bool handleBlinds(int& currentBet, int& pot, int& num_players,
+                    std::pair<bool, int>& bigBlindRaised);
 
   // implementation of one turn for a player in any situation or round.
   // currentBet is used to pass in a currentBet round member variable to track
   // it through turns. pot tracks the total pot size for a round. prevRaise is a
   // less important variable which is used to calculate the minimum raise.
-  void play(int& currentBet, int& pot, int& num_players,
-            int& previous_raise) override;
+  void play(int& currentBet, int& pot, int& num_players, int& previous_raise,
+            std::pair<bool, int>& bigBlindRaised,
+            std::string& player_in) override;
 
   // prints interface data for players, including name, stack size, and hand.
   void printPlayerData() const;
@@ -134,7 +146,6 @@ class Human : public Player {
 
   // reads in bet/raise values and ensures they are numbers.
   void readInput(int& readValue, int& pVal);
- 
 
   // checks that the bet input is less than or equal to the player's total stack
   // size and, in the case of a previous player raising, at least the minimum
