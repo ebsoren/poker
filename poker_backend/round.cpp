@@ -2,6 +2,28 @@
 
 using namespace std;
 
+int getMostRecentBet(const std::vector<std::unique_ptr<Player>>& players,
+                     int loc) {
+  int n = players.size();
+
+  if (loc == 0) {
+    for (int i = n - 1; i >= 0; --i) {
+      if (!players[i]->has_folded_func()) {
+        return players[i]->getBet();
+      }
+    }
+  } else {
+    int i = loc - 1;
+    while (i != loc) {
+      if (!players[i]->has_folded_func()) {
+        return players[i]->getBet();
+      }
+      i = (i - 1 + n) % n;
+    }
+  }
+  return 0;
+}
+
 Round::Round(std::vector<std::unique_ptr<Player>>& players)
     : players(players) {}
 
@@ -9,9 +31,9 @@ Round::~Round() {}
 
 void Round::setup(int& starter) {
   if (starter == players.size() || starter == 0) {
-    prev_player_in = players[players.size() - 1]->getName();
+    prev_player = players[players.size() - 1]->getName();
   } else {
-    prev_player_in = players[starter - 1]->getName();
+    prev_player = players[starter - 1]->getName();
   }
   for (int i = starter; i <= players.size(); ++i) {
     if (i == players.size()) {
@@ -60,7 +82,7 @@ void Round::setup(int& starter) {
 void Round::preflop() {
   cout << "\nit is the preflop\n" << endl;
 
-  playAll(starter, prev_player_in);
+  playAll(starter);
   checkWinner();
 }
 
@@ -89,7 +111,7 @@ void Round::postflop(const string current_round) {
   }
   currentBet = 0;
 
-  playAll(starter, prev_player_in);
+  playAll(starter);
   checkWinner();
 }
 
@@ -124,20 +146,30 @@ bool Round::show_cards() {
   return true;
 }
 
-void Round::playAll(int& starter, string& prev_player_in) {
-  // MAKE THIS RECURSIVE!!! DEPENDING ON RAISE OR NOT
+void Round::playAll(int& starter) {
   bool first = true;
   pair<bool, int> bigBlindRaised = {false, 0};
+  pair<Decision, int> decision;
   while (!checkIfContinue(first)) {
     for (int i = starter; i <= players.size(); ++i) {
       if (i == players.size()) {
         for (int j = 0; j < starter; ++j) {
-          players[j]->play(currentBet, pot, num_players, previous_raise,
-                           bigBlindRaised, prev_player_in);
+          if (prev_player != players[j]->getPrevPlayer()) {
+            decision = {NODECISION, 0};
+          } else {
+            decision = players[j]->decide(currentBet, num_players,
+                                          previous_raise, bigBlindRaised);
+          }
+          update(decision, j);
         }
       } else {
-        players[i]->play(currentBet, pot, num_players, previous_raise,
-                         bigBlindRaised, prev_player_in);
+        if (prev_player != players[i]->getPrevPlayer()) {
+          decision = {NODECISION, 0};
+        } else {
+          decision = players[i]->decide(currentBet, num_players, previous_raise,
+                                        bigBlindRaised);
+        }
+        update(decision, i);
       }
     }
   }
@@ -146,8 +178,10 @@ void Round::playAll(int& starter, string& prev_player_in) {
 void Round::resetBets() {
   for (int i = 0; i < players.size(); ++i) {
     players[i]->setValues(0);
+    players[i]->setHasActed(false);
   }
   previous_raise = 0;
+  prev_player = players[starter]->getPrevPlayer();
 }
 
 bool Round::checkIfContinue(bool& first_round) {
@@ -166,12 +200,15 @@ bool Round::checkIfContinue(bool& first_round) {
     if (players[i]->is_all_in_func() || players[i]->has_folded_func()) {
       ++counter;
     }
-    if (players[i]->getIsBlind() != 0 && num_players > 1) {
-      return false;
-    }
   }
   if (counter >= players.size() - 1) {
     return true;
+  }
+  for (int i = 0; i < players.size(); ++i) {
+    if ((players[i]->getIsBlind() != 0 && num_players > 1) ||
+        !players[i]->has_folded_func() && !players[i]->getHasActed()) {
+      return false;
+    }
   }
 
   if (std::equal(betSizes.begin() + 1, betSizes.end(), betSizes.begin())) {
@@ -197,8 +234,8 @@ vector<pair<Card, Card>> Round::getHands() {
 
 void Round::printWinner(
     pair<pair<int, int>, pair<Hand, vector<Card>>> winnerData) {
-  cout << "and gains $"
-       << getPot() - players[winnerData.first.first]->getTotalBet() << ".\n";
+  cout << "and wins $"
+       << getPot() << ".\n";
   players[winnerData.first.first]->addStack(getPot());
 
   for (auto it = players.begin(); it != players.end();) {
@@ -219,5 +256,25 @@ void Round::printWinner(
       cout << playerPtr->getName() << endl;
     }
     cout << "\n\nNew Round\n\n";
+  }
+}
+
+void Round::update(pair<Decision, int> decision_value, int loc) {
+  Decision decision = decision_value.first;
+  int value = decision_value.second;
+  if (decision == NODECISION) {
+    return;
+  } else if (decision == FOLD) {
+    --num_players;
+    return;
+  }
+  prev_player = players[loc]->getName();
+  pot += value;
+
+  if (decision == BET || decision == BLIND || decision == ALLIN ||
+      decision == RAISE) {
+    currentBet = value;
+
+    previous_raise = getMostRecentBet(players, loc);
   }
 }

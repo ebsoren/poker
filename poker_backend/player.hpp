@@ -6,6 +6,18 @@
 
 #include "card.hpp"
 
+enum Decision {
+  CHECK = 0,
+  BET = 1,
+  RAISE = 2,
+  CALL = 3,
+  FOLD = 4,
+  BLIND = 5,
+  ALLIN = 6,
+  SKIP = 7,
+  NODECISION = 8,
+};
+
 class Player {
  public:
   // player constructor. sets name, type, and stack, but not hand
@@ -22,11 +34,6 @@ class Player {
 
   // returns player hand
   virtual const std::pair<Card, Card>& getHand() const { return hand; };
-
-  // virtual function. Implemented separately for different types of player.
-  virtual void play(int& currentBet, int& pot, int& num_players,
-                    int& previous_raise, std::pair<bool, int>& bigBlindRaised,
-                    std::string& player_in) = 0;
 
   virtual void addStack(int val) { stack += val; }
 
@@ -62,18 +69,48 @@ class Player {
   virtual const int& getBigBlind() const { return bigBlind; }
   virtual const int& getSmallBlind() const { return smallBlind; }
 
+  virtual const bool getHasActed() const { return has_acted; }
+  virtual void setHasActed(bool in) { has_acted = in; }
+
   virtual const int& getIsBlind() const { return isBlind; }
   virtual void setIsBlind(int val_in) { isBlind = val_in; }
+  virtual const int& getPrevBet() const { return prev_bet; }
 
   virtual void setPrevPlayer(std::string player_in) { prev_player = player_in; }
   virtual const std::string& getPrevPlayer() const { return prev_player; }
 
   std::pair<Card, Card> getHand() { return hand; }
 
+  int handleAllInDecision();
+  int handleBetDecision(int& currentBet);
+  int handleCallDecision(int& currentBet);
+  int handleRaiseDecision(int& currentBet, int& raise_value);
+
+  // implementation of one turn for a player in any situation or round.
+  // currentBet is used to pass in a currentBet round member variable to track
+  // it through turns. pot tracks the total pot size for a round. prevRaise is a
+  // less important variable which is used to calculate the minimum raise.
+  virtual std::pair<Decision, int> decide(int& currentBet, int& num_players,
+                                          int& previous_Raise,
+                                          std::pair<bool, int>& bigBlindRaised);
+  std::pair<int, bool> handleBlinds(int& currentBet,
+                                    std::pair<bool, int>& bigBlindRaised);
+
+  virtual void printPlayerData() const = 0;
+  virtual void readInput(int& readValue, int& raise_val) = 0;
+
+  virtual bool wantsToBet() = 0;
+  virtual void decideRaiseValue(int& currentBet, int& prevRaise ,int& raise_value) = 0;
+  virtual void decideFCRA(int &currentBet, int&prevRaise, std::string&decision_in) = 0;
+
   // maintains the correct value of the player's bets and stack. "bet" is the
   // current amount of money going into the pot. "round_bet" is the total money
   // paid this round. stack is the player's total amount of money.
   virtual const void setValues(int bet_in) {
+    prev_bet = bet;
+    if (bet_in == 0) {
+      prev_bet = 0;
+    }
     bet = bet_in;
     stack -= bet_in;
     round_bet += bet_in;
@@ -86,17 +123,21 @@ class Player {
   virtual void reset() {
     has_folded = false;
     is_all_in = false;
+    has_acted = false;
     bet = 0;
     round_bet = 0;
     total_bet = 0;
+    round_stack = stack;
   }
 
  private:
   std::pair<Card, Card> hand = {Card(TWO, CLUBS),
                                 Card(TWO, SPADES)};  // player's hand
   int stack = 0;                                     // player's stack
-  bool has_folded = false;                           // tracks fold status
-  bool is_all_in = false;                            // tracks all in status
+  int round_stack = 0;      // player's stack at the start of a round
+  bool has_folded = false;  // tracks fold status
+  bool is_all_in = false;   // tracks all in status
+  bool has_acted = false;
 
   int smallBlind = 20;
   int bigBlind = 40;
@@ -104,6 +145,7 @@ class Player {
                     // blind already bet; used to check if big blind player has
                     // the right to check/raise if nobody raised the big blind.
 
+  int prev_bet = 9;
   int bet = 0;        // current bet (tracked in case of reraise)
   int round_bet = 0;  // bet by round, including what was bet before a reraise
   int total_bet = 0;  // total bet over a game
@@ -115,9 +157,15 @@ class Player {
 class Bot : public Player {
  public:
   using Player::Player;
-  void play(int& currentBet, int& pot, int& num_players, int& previous_Raise,
-            std::pair<bool, int>& bigBlindRaised,
-            std::string &player_in) override;
+  // not implemented for bot.
+  void printPlayerData() const { return; }
+
+  // not implemented for bot.
+  void readInput(int& readValue, int& pVal) { return; }
+
+  bool wantsToBet();
+  void decideRaiseValue(int& currentBet, int& prevRaise ,int& raise_value);
+  void decideFCRA(int &currentBet, int&prevRaise, std::string&decision_in);
 };
 
 class Human : public Player {
@@ -125,24 +173,9 @@ class Human : public Player {
   Human(const std::string& name, const std::string& type, int stack);
 
   // runs through the blinds round of betting.
-  bool handleBlinds(int& currentBet, int& pot, int& num_players,
-                    std::pair<bool, int>& bigBlindRaised);
-
-  // implementation of one turn for a player in any situation or round.
-  // currentBet is used to pass in a currentBet round member variable to track
-  // it through turns. pot tracks the total pot size for a round. prevRaise is a
-  // less important variable which is used to calculate the minimum raise.
-  void play(int& currentBet, int& pot, int& num_players, int& previous_raise,
-            std::pair<bool, int>& bigBlindRaised,
-            std::string& player_in) override;
 
   // prints interface data for players, including name, stack size, and hand.
   void printPlayerData() const;
-
-  void handleAllInDecision(int& currentBet, int& pot);
-  void handleBetDecision(int& currentBet, int& pot);
-  void handleCallDecision(int& currentBet, int& pot);
-  void handleRaiseDecision(int& currentBet, int& raise_value, int& pot);
 
   // reads in bet/raise values and ensures they are numbers.
   void readInput(int& readValue, int& pVal);
@@ -152,6 +185,10 @@ class Human : public Player {
   // raise allowed by hold'em rules. Called in the readInput function.
   bool sanitizeBetInput(int& val_in, int& stack_val, int& raise_val,
                         bool isRaise);
+  bool wantsToBet();
+
+  void decideRaiseValue(int& currentBet, int& prevRaise ,int& raise_value);
+  void decideFCRA(int &currentBet, int&prevRaise, std::string&decision_in);
 };
 
 #endif

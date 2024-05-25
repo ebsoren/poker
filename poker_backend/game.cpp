@@ -14,10 +14,9 @@ using namespace std;
 int main() {
   std::vector<std::unique_ptr<Player>> players;
 
-
   players.emplace_back(std::make_unique<Human>("Esben", "Human", 1000));
-  players.emplace_back(std::make_unique<Human>("Adam buns", "Human", 1000));
-   players.emplace_back(std::make_unique<Human>("Ben", "Human", 1000));
+  players.emplace_back(std::make_unique<Bot>("Adam buns", "Human", 1000));
+ // players.emplace_back(std::make_unique<Human>("Ben", "Human", 1000));
   // players.emplace_back(std::make_unique<Human>("Tyler", "Human", 1000));
 
   Round *round = new Round(players);
@@ -37,7 +36,8 @@ int main() {
       Decider *decider =
           new Decider(round->getHands(), round->getCommunityCards());
 
-      auto winnerData = decider->determineWinner();
+      pair<pair<int, int>, pair<Hand, vector<Card>>> winnerData =
+          decider->determineWinner();
 
       cout << players[winnerData.first.first]->getName() << " won with ";
       decider->printWinningHand(
@@ -46,6 +46,5 @@ int main() {
       round->printWinner(winnerData);
     }
     round->reset();
-  
   }
 }
